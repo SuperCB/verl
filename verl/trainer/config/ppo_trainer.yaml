@@ -488,6 +488,9 @@ actor_rollout_ref:
         # The attention backend for sglang engine. Options: flashinfer, triton, flashmla, null for default.
         attention_backend: null
 
+        # Estimated rollout time to avoid barrier timeout errors
+        estimated_rollout_time: null
+
     # Sampling parameters used during validation.
     val_kwargs:
 

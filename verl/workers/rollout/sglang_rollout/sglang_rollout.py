@@ -71,6 +71,7 @@ from verl.workers.rollout.schemas import (
     Message,
 )
 from verl.workers.rollout.sglang_rollout.utils import broadcast_pyobj
+from datetime import timedelta
 
 try:
     from sglang.srt.function_call.function_call_parser import FunctionCallParser
@@ -307,6 +308,13 @@ class SGLangRollout(BaseRollout):
         self._init_sampling_params(**kwargs)
 
         self.processing_class = processing_class
+
+        if config.engine_kwargs.sglang.estimated_rollout_time is not None:
+            self.estimated_rollout_time = timedelta(
+                seconds=config.engine_kwargs.sglang.estimated_rollout_time,
+            )
+        else:
+            self.estimated_rollout_time = None
 
         try:
             # This is when processing_class is a tokenizer
@@ -691,7 +699,7 @@ class SGLangRollout(BaseRollout):
             output = None
 
         # Most naive implementation, can extract tensor and send via gloo if too slow
-        dist.barrier()
+        dist.monitored_barrier(timeout=self.estimated_rollout_time)
         [output] = broadcast_pyobj(
             data=[output],
             rank=self._rank,
